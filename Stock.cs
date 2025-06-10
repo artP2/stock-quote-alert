@@ -9,6 +9,12 @@ public class ArgsParseException : Exception {
     {}
 }
 
+public enum StockAction {
+	Sell,
+	DoNothing,
+	Buy
+}
+
 /// <summary>
 /// Represents a stock with its monitoring parameters.
 /// </summary>
@@ -63,5 +69,21 @@ public record Stock (
 		} catch (Exception e) {
 			throw e;
 		}
+	}
+
+	/// <summary>
+	/// Orchestrates fetching the price and determining the recommended action.
+	/// </summary>
+	/// <returns>A StockAction enum representing the action to be taken.</returns>
+	public async Task<StockAction> GetStockActionAsync(){
+		decimal price = await GetPriceAsync();
+
+		if (price > SellPrice) {
+			return StockAction.Sell;
+		}
+		if (price < BuyPrice) {
+			return StockAction.Buy;
+		}
+		return StockAction.DoNothing;
 	}
 };
