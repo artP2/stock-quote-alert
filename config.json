@@ -1,0 +1,7 @@
+{
+  "TargetEmail": "destino@email.com",
+  "SmtpServer": "smtp.email.com",
+  "SmtpPort": 587,
+  "SmtpUser": "usuario@email.com",
+  "SmtpPassword": "senha"
+}
