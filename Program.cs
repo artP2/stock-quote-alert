@@ -67,6 +67,38 @@ public record Stock (
 			throw new ArgsParseException("Os preços devem ser numeros.");
 		}
 	}
+
+	// static http client for reuse
+	private static HttpClient client = new() {
+		BaseAddress = new Uri($"https://ledev.com.br/api/cotacoes/"),	
+		Timeout = TimeSpan.FromSeconds(10),
+	};
+
+	/// <summary>
+	/// Asynchronously fetches the current stock price from the API.
+	/// </summary>
+	/// <returns>The current stock price as a decimal.</returns>
+	public async Task<decimal> GetPriceAsync() {
+		try {
+			using HttpResponseMessage response  = await client.GetAsync($"{StockName}");
+
+			response.EnsureSuccessStatusCode();
+    
+		    var jsonResponse = await response.Content.ReadAsStringAsync();
+		    Console.WriteLine($"{jsonResponse}\n");
+
+			var jsonData = JsonDocument.Parse(jsonResponse);
+			var priceString = jsonData.RootElement.GetProperty("price").GetString();
+
+			if (priceString == null) {
+				throw new Exception("null");
+			}
+	        var price = Decimal.Parse(priceString, System.Globalization.CultureInfo.InvariantCulture);
+			return price;
+		} catch (Exception e) {
+			throw e;
+		}
+	}
 };
 
 /// <summary>
