@@ -16,11 +16,26 @@ public class StockNotFoundException : Exception {
 	public StockNotFoundException(string stockName) : base($"{stockName} nao foi encontrado na API.") {}
 }
 
-public enum StockAction {
-	Sell,
-	DoNothing,
-	Buy
-}
+/// <summary>
+/// Defines a base class to represent the possible monitoring actions.
+/// Used as a discriminated union.
+/// </summary>
+public abstract record StockAction;
+
+/// <summary>
+/// Represents a Sell recommendation at a given price.
+/// </summary>
+public sealed record Sell(decimal Price) : StockAction;
+
+/// <summary>
+/// Represents a Buy recommendation at a given price.
+/// </summary>
+public sealed record Buy(decimal Price) : StockAction;
+
+/// <summary>
+/// Represents the absence of a recommendation.
+/// </summary>
+public sealed record DoNothing : StockAction;
 
 /// <summary>
 /// Represents a stock with its monitoring parameters.
@@ -86,18 +101,21 @@ public record Stock (
 	}
 
 	/// <summary>
+	/// Determines the action to be taken based on the current price.
+	/// </summary>
+	/// <param name="price">The current stock price.</param>
+	/// <returns>A StockAction object (Sell, Buy, or DoNothing).</returns>
+	StockAction StockActionFromPrice(decimal price) =>
+		price > SellPrice ? new Sell(price) :
+		price < BuyPrice ? new Buy(price) :
+		new DoNothing();
+
+	/// <summary>
 	/// Orchestrates fetching the price and determining the recommended action.
 	/// </summary>
-	/// <returns>A StockAction enum representing the action to be taken.</returns>
+	/// <returns>A StockAction object representing the action to be taken.</returns>
 	public async Task<StockAction> GetStockActionAsync(){
 		decimal price = await GetPriceAsync();
-
-		if (price > SellPrice) {
-			return StockAction.Sell;
-		}
-		if (price < BuyPrice) {
-			return StockAction.Buy;
-		}
-		return StockAction.DoNothing;
+		return StockActionFromPrice(price);
 	}
 };

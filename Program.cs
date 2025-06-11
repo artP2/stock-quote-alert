@@ -13,18 +13,27 @@ public class StockQuoteAlert {
 		Console.WriteLine($"Venda em: {stock.SellPrice}\nCompra em: {stock.BuyPrice}\n");
 		while (true){
 			try {
+				Console.WriteLine($"[{stock.StockName}] Verificando preço...");
 				StockAction action = await stock.GetStockActionAsync();
 
-				if (action == StockAction.DoNothing){
-					Console.WriteLine($"[{stock.StockName}] Nenhuma açao necessaria. Proxima verificaçao em 1 minuto.");
-				} else {
-					string actionText = action == StockAction.Buy ? "comprar" : "vender";
+				if (action is Buy or Sell){
+					var (actionText, currPrice) = action switch {
+						Buy b => ("comprar", b.Price),
+						Sell s => ("vender", s.Price),
+						_ => throw new InvalidOperationException()
+					};
 					Console.WriteLine($"[{stock.StockName}] AVISO! Açao recomendada: {actionText}!");
 
-					var subject = $"Alerta de Preço para a Açao {stock.StockName}";
-					var body = $"Este e um alerta para {actionText} a açao {stock.StockName}.\n";
+					var subject = $"Alerta de Preço para {actionText} a Açao {stock.StockName}";
+					var body =
+						$"Este e um alerta para {actionText} a açao {stock.StockName}.\n\n" +
+						$"Preço atual: {currPrice};\n\n" +
+						$"Preço de venda: {stock.SellPrice};\n" +
+						$"Preço de compra: {stock.BuyPrice};";
 					emailService.Send(targetEmail, subject, body);
 					Console.WriteLine($"[{stock.StockName}] Email de alerta enviado com sucesso!");
+				} else {
+					Console.WriteLine($"[{stock.StockName}] Nenhuma açao necessaria.");
 				}
 			} catch (StockNotFoundException e) {
 				Console.WriteLine($"[{stock.StockName}] ERRO: " + e.Message);
