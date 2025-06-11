@@ -5,8 +5,15 @@ using System.Text.Json;
 /// </summary>
 public class ArgsParseException : Exception {
     public ArgsParseException(string message)
-        : base($"ERRO: {message}\n\nComo usar: stock-quote-alert [ativo] [preco_de_venda] [preco_de_compra]")
+        : base($"{message}\n\nComo usar: stock-quote-alert [ativo] [preco_de_venda] [preco_de_compra]")
     {}
+}
+
+/// <summary>
+/// Exception thrown when a stock is not found in the API.
+/// </summary>
+public class StockNotFoundException : Exception {
+	public StockNotFoundException(string stockName) : base($"{stockName} nao foi encontrado na API.") {}
 }
 
 public enum StockAction {
@@ -54,7 +61,12 @@ public record Stock (
 		try {
 			using HttpResponseMessage response  = await client.GetAsync($"{StockName}");
 
-			response.EnsureSuccessStatusCode();
+			// check the get status
+			switch (response.StatusCode) {
+				case System.Net.HttpStatusCode.NotFound : throw new StockNotFoundException(StockName);
+				case System.Net.HttpStatusCode.OK: break;
+				default: throw new Exception();
+			}
     
 		    var jsonResponse = await response.Content.ReadAsStringAsync();
 
@@ -62,12 +74,14 @@ public record Stock (
 			var priceString = jsonData.RootElement.GetProperty("price").GetString();
 
 			if (priceString == null) {
-				throw new Exception("null");
+				throw new Exception();
 			}
 	        var price = Decimal.Parse(priceString, System.Globalization.CultureInfo.InvariantCulture);
 			return price;
-		} catch (Exception e) {
-			throw e;
+		} catch (StockNotFoundException) {
+			throw;
+		} catch {
+			throw new Exception($"Nao foi possivel consultar o preço de [{StockName}]");
 		}
 	}
 
