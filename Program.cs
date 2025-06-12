@@ -14,15 +14,17 @@ public class StockQuoteAlert {
 	/// <param name="stockGetService">The service for getting stock data.</param>
 	/// <param name="emailService">The service for sending emails.</param>
 	/// <param name="config">The applcation configuration data.</param>
+	/// <param name="cancelationToken">The token to cancel the task.</param>
 	public static async Task MonitorStockAsync(
 		Stock stock,
 		IStockGetService stockGetService,
 		IEmailService emailService,
-		Config config
+		Config config,
+		CancellationToken cancelationToken
 	){
 		Console.WriteLine($"[Monitorando {stock.StockName}]");
 		Console.WriteLine($"Venda em: {stock.SellPrice}\nCompra em: {stock.BuyPrice}\n");
-		while (true){
+		while (!cancelationToken.IsCancellationRequested){
 			try {
 				Console.WriteLine($"[{stock.StockName}] Verificando preço...");
 				StockAction action = await stock.GetStockActionAsync(stockGetService);
@@ -53,7 +55,7 @@ public class StockQuoteAlert {
 			} catch (Exception e){
 				Console.WriteLine($"[{stock.StockName}] ERRO: " + e.Message);
 			} finally {
-				await Task.Delay(TimeSpan.FromMinutes(config.MonitorIntervalMinutes));
+				await Task.Delay(TimeSpan.FromMinutes(config.MonitorIntervalMinutes), cancelationToken);
 			}
 		}
 	}
@@ -83,18 +85,27 @@ public class StockQuoteAlert {
 
 			Console.WriteLine($"Email de destino: {config.TargetEmail}\n");
 
+			var cts = new CancellationTokenSource();
+			Console.CancelKeyPress += (sender, e) => {
+	            Console.WriteLine("\nENCERRANDO TODOS OS MONITORAMENTOS...");
+	            cts.Cancel();
+	        };
+	        Console.WriteLine("Pressione [Ctrl+C] para encerrar a aplicaçao.");
+
 			// processes the command-line arguments in chunks of 3
 			// for each chunk, it creates a Stock object and starts a monitoring task
 			List<Task> monitorTasks = args
 				.Where(arg => !arg.StartsWith("--")) // ignore config args
 				.Chunk(3)
 				.Select(stockArgs => Stock.Parse(stockArgs))
-				.Select(stock => MonitorStockAsync(stock, stockGetService, emailService, config))
+				.Select(stock => MonitorStockAsync(stock, stockGetService, emailService, config, cts.Token))
 				.ToList();
 
 			// awaits the completion of all monitoring tasks
 			await Task.WhenAll(monitorTasks);
 
+		} catch (OperationCanceledException){
+			// ignore task cancelation
 		} catch (Exception e) {
 			Console.WriteLine("ERRO: " + e.Message);
 		}
