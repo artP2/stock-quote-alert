@@ -13,12 +13,12 @@ public class StockQuoteAlert {
 	/// <param name="stock">The stock object to be monitored.</param>
 	/// <param name="stockGetService">The service for getting stock data.</param>
 	/// <param name="emailService">The service for sending emails.</param>
-	/// <param name="targetEmail">The target email for the alerts.</param>
+	/// <param name="config">The applcation configuration data.</param>
 	public static async Task MonitorStockAsync(
 		Stock stock,
 		IStockGetService stockGetService,
 		IEmailService emailService,
-		string targetEmail
+		Config config
 	){
 		Console.WriteLine($"[Monitorando {stock.StockName}]");
 		Console.WriteLine($"Venda em: {stock.SellPrice}\nCompra em: {stock.BuyPrice}\n");
@@ -41,7 +41,7 @@ public class StockQuoteAlert {
 						$"Preço atual: {currPrice};\n\n" +
 						$"Preço de venda: {stock.SellPrice};\n" +
 						$"Preço de compra: {stock.BuyPrice};";
-					await emailService.SendAsync(targetEmail, subject, body);
+					await emailService.SendAsync(config.TargetEmail, subject, body);
 					Console.WriteLine($"[{stock.StockName}] Email de alerta enviado com sucesso!");
 				} else {
 					Console.WriteLine($"[{stock.StockName}] Nenhuma açao necessaria.");
@@ -53,7 +53,7 @@ public class StockQuoteAlert {
 			} catch (Exception e){
 				Console.WriteLine($"[{stock.StockName}] ERRO: " + e.Message);
 			} finally {
-				await Task.Delay(TimeSpan.FromMinutes(1));
+				await Task.Delay(TimeSpan.FromMinutes(config.MonitorIntervalMinutes));
 			}
 		}
 	}
@@ -81,7 +81,6 @@ public class StockQuoteAlert {
 	        var emailService = host.Services.GetRequiredService<IEmailService>();
 			var stockGetService = host.Services.GetRequiredService<IStockGetService>();
 
-            string targetEmail = config.TargetEmail;
 			Console.WriteLine($"Email de destino: {config.TargetEmail}\n");
 
 			// processes the command-line arguments in chunks of 3
@@ -90,7 +89,7 @@ public class StockQuoteAlert {
 				.Where(arg => !arg.StartsWith("--")) // ignore config args
 				.Chunk(3)
 				.Select(stockArgs => Stock.Parse(stockArgs))
-				.Select(stock => MonitorStockAsync(stock, stockGetService, emailService, config.TargetEmail))
+				.Select(stock => MonitorStockAsync(stock, stockGetService, emailService, config))
 				.ToList();
 
 			// awaits the completion of all monitoring tasks

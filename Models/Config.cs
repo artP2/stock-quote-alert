@@ -22,4 +22,8 @@ public class Config {
     /// The password for SMTP authentication.
     /// </summary>
     public string SmtpPassword { get; set; } = default!;
+    /// <summary>
+    /// The interval, in minutes, between price checks. Defauts to 1 minute.
+    /// </summary>
+    public int MonitorIntervalMinutes { get; set; } = 1;
 }
