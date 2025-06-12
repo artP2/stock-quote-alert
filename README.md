@@ -7,7 +7,7 @@ A .NET command-line application to monitor stock prices and send email alerts wh
 ## Setup
 
 1.  Clone the repository.
-2.  In the root directory, modify the `appsettings.json` with your SMTP server datails.
+2.  In the root directory, modify the `appsettings.json` with your SMTP server datails and your preferences.
 
 > **Note:** You can override this settings in the cli arguments.
 
