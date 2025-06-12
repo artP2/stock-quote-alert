@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 /// <summary>
 /// Main class that orchestrates stock monitoring.
@@ -54,19 +56,19 @@ public class StockQuoteAlert {
 	/// </summary>
 	/// <param name="args">Command-line arguments: [stock_name] [sell_price] [buy_price]</param>
 	public static async Task Main(string[] args) {
+		var host = Host.CreateDefaultBuilder(args)
+			.ConfigureServices((context, services) => {
+				services.Configure<Config>(context.Configuration.GetSection("Config"));
+                services.AddSingleton<IEmailService, Email>(provider => {
+                    var config = provider.GetRequiredService<IOptions<Config>>().Value;
+                    return new Email(config);
+                });
+		}).Build();
 		try {
-			var services = new ServiceCollection();
+	        var config = host.Services.GetRequiredService<IOptions<Config>>().Value;
+	        var emailService = host.Services.GetRequiredService<IEmailService>();
 
-			Console.WriteLine("Carregando configuraçao...");
-			Config config = Config.Load();
-			Console.WriteLine("Configuraçao carregada!");
-
-            services.AddSingleton(config);
-            services.AddSingleton<IEmailService, Email>();
-            var serviceProvider = services.BuildServiceProvider();
-			var emailService = serviceProvider.GetRequiredService<IEmailService>();
             string targetEmail = config.TargetEmail;
-
 			Console.WriteLine($"Email de destino: {config.TargetEmail}\n");
 
 			// processes the command-line arguments in chunks of 3
