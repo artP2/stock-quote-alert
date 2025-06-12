@@ -66,9 +66,9 @@ public class StockQuoteAlert {
 		var host = Host.CreateDefaultBuilder(args)
 			.ConfigureServices((context, services) => {
 				services.Configure<Config>(context.Configuration.GetSection("Config"));
-                services.AddSingleton<IEmailService, Email>(provider => {
+                services.AddSingleton<IEmailService, EmailService>(provider => {
                     var config = provider.GetRequiredService<IOptions<Config>>().Value;
-                    return new Email(config);
+                    return new EmailService(config);
                 });
 				services.AddSingleton<IStockGetService, LeDevStockGetService>();
 				services.AddHttpClient<IStockGetService, LeDevStockGetService>(client=>{

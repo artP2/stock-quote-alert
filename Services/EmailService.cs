@@ -4,14 +4,14 @@ using System.Net;
 /// <summary>
 /// Represents the email sending service.
 /// </summary>
-public class Email : IEmailService {
+public class EmailService : IEmailService {
 	private readonly SmtpClient client;
 	private readonly string user;
 	/// <summary>
 	/// Constructor that initializes the email service from a configuration object.
 	/// </summary>
 	/// <param name="config">The config with email service settings.</param>
-	public Email(Config config) {
+	public EmailService(Config config) {
 		client = new SmtpClient(config.SmtpServer, config.SmtpPort){
 			Credentials = new NetworkCredential(config.SmtpUser, config.SmtpPassword),	
 			EnableSsl = true
