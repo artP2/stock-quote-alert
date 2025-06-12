@@ -41,7 +41,7 @@ public class StockQuoteAlert {
 						$"Preço atual: {currPrice};\n\n" +
 						$"Preço de venda: {stock.SellPrice};\n" +
 						$"Preço de compra: {stock.BuyPrice};";
-					emailService.Send(targetEmail, subject, body);
+					await emailService.SendAsync(targetEmail, subject, body);
 					Console.WriteLine($"[{stock.StockName}] Email de alerta enviado com sucesso!");
 				} else {
 					Console.WriteLine($"[{stock.StockName}] Nenhuma açao necessaria.");

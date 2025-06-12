@@ -20,16 +20,16 @@ public class EmailService : IEmailService {
 	}
 
 	/// <summary>
-	/// Sends an email.
+	/// Asynchronously sends an email.
 	/// </summary>
 	/// <param name="targetEmail">The recipient's email address.</param>
 	/// <param name="subject">The email's subject.</param>
 	/// <param name="body">The email's body.</param>
-	public void Send(string targetEmail, string subject, string body){
+	public async Task SendAsync(string targetEmail, string subject, string body){
 		try {
 			var message = new MailMessage(user, targetEmail, subject, body);
 
-			client.Send(message);
+			await client.SendMailAsync(message);
 		} catch {
 			throw new SendEmailException("Nao foi possivel enviar o email.");
 		}

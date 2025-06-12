@@ -12,5 +12,5 @@ public interface IEmailService {
 	/// <param name="targetEmail">The recipient's email address.</param>
 	/// <param name="subject">The email's subject.</param>
 	/// <param name="body">The email's body.</param>
-    void Send(string targetEmail, string subject, string body);
+    Task SendAsync(string targetEmail, string subject, string body);
 }
