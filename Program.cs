@@ -73,7 +73,9 @@ public class StockQuoteAlert {
 
 			// processes the command-line arguments in chunks of 3
 			// for each chunk, it creates a Stock object and starts a monitoring task
-			List<Task> monitorTasks = args.Chunk(3)
+			List<Task> monitorTasks = args
+				.Where(arg => !arg.StartsWith("--")) // ignore config args
+				.Chunk(3)
 				.Select(stockArgs => Stock.Parse(stockArgs))
 				.Select(stock => MonitorStockAsync(stock, emailService, config.TargetEmail))
 				.ToList();
