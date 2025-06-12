@@ -2,32 +2,22 @@ using System.Net.Mail;
 using System.Net;
 
 /// <summary>
-/// Exception thrown when an error occurs while trying to send an email.
-/// </summary>
-public class SendEmailException : Exception {
-	public SendEmailException(string? message) : base(message) { }
-};
-
-/// <summary>
 /// Represents the email sending service.
 /// </summary>
-/// <param name="client">The SmtpClient configured to send emails.</param>
-/// <param name="user">The sender's email address.</param>
-public record Email (
-	SmtpClient client,
-	string user
-) {
+public class Email : IEmailService {
+	private readonly SmtpClient client;
+	private readonly string user;
 	/// <summary>
 	/// Constructor that initializes the email service from a configuration object.
 	/// </summary>
 	/// <param name="config">The config with email service settings.</param>
-	public Email(Config config) : this(
-		new SmtpClient(config.SmtpServer, config.SmtpPort){
+	public Email(Config config) {
+		client = new SmtpClient(config.SmtpServer, config.SmtpPort){
 			Credentials = new NetworkCredential(config.SmtpUser, config.SmtpPassword),	
 			EnableSsl = true
-		},
-		config.SmtpUser
-	){}
+		};
+		user = config.SmtpUser;
+	}
 
 	/// <summary>
 	/// Sends an email.
