@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+
 /// <summary>
 /// Main class that orchestrates stock monitoring.
 /// </summary>
@@ -8,7 +10,7 @@ public class StockQuoteAlert {
 	/// <param name="stock">The stock object to be monitored.</param>
 	/// <param name="emailService">The service for sending emails.</param>
 	/// <param name="targetEmail">The target email for the alerts.</param>
-	public static async Task MonitorStockAsync(Stock stock, Email emailService, string targetEmail){
+	public static async Task MonitorStockAsync(Stock stock, IEmailService emailService, string targetEmail){
 		Console.WriteLine($"[Monitorando {stock.StockName}]");
 		Console.WriteLine($"Venda em: {stock.SellPrice}\nCompra em: {stock.BuyPrice}\n");
 		while (true){
@@ -53,12 +55,19 @@ public class StockQuoteAlert {
 	/// <param name="args">Command-line arguments: [stock_name] [sell_price] [buy_price]</param>
 	public static async Task Main(string[] args) {
 		try {
+			var services = new ServiceCollection();
+
 			Console.WriteLine("Carregando configuraçao...");
 			Config config = Config.Load();
 			Console.WriteLine("Configuraçao carregada!");
 
+            services.AddSingleton(config);
+            services.AddSingleton<IEmailService, Email>();
+            var serviceProvider = services.BuildServiceProvider();
+			var emailService = serviceProvider.GetRequiredService<IEmailService>();
+            string targetEmail = config.TargetEmail;
+
 			Console.WriteLine($"Email de destino: {config.TargetEmail}\n");
-			var emailService = new Email(config);
 
 			// processes the command-line arguments in chunks of 3
 			// for each chunk, it creates a Stock object and starts a monitoring task
