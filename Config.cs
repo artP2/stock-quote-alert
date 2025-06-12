@@ -1,15 +1,25 @@
 /// <summary>
 /// Represents the structure of the application's configuration data.
 /// </summary>
-/// <param name="TargetEmail">The email that will receive the alerts.</param>
-/// <param name="SmtpServer">The SMTP server address.</param>
-/// <param name="SmtpPort">The SMTP server port.</param>
-/// <param name="SmtpUser">The username for SMTP authentication.</param>
-/// <param name="SmtpPassword">The password for SMTP authentication.</param>
 public class Config {
+    /// <summary>
+    /// The email that will receive the alerts.
+    /// </summary>
     public string TargetEmail { get; set; } = default!;
+    /// <summary>
+    /// The SMTP server address.
+    /// </summary>
     public string SmtpServer { get; set; } = default!;
+    /// <summary>
+    /// The SMTP server port.
+    /// </summary>
     public int SmtpPort { get; set; }
+    /// <summary>
+    /// The username for SMTP authentication.
+    /// </summary>
     public string SmtpUser { get; set; } = default!;
+    /// <summary>
+    /// The password for SMTP authentication.
+    /// </summary>
     public string SmtpPassword { get; set; } = default!;
 }

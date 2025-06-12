@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Http;
 
 /// <summary>
 /// Main class that orchestrates stock monitoring.
@@ -10,15 +11,21 @@ public class StockQuoteAlert {
 	/// Asynchronously monitors the price of a stock, sending email alerts when buy or sell prices are reached.
 	/// </summary>
 	/// <param name="stock">The stock object to be monitored.</param>
+	/// <param name="stockGetService">The service for getting stock data.</param>
 	/// <param name="emailService">The service for sending emails.</param>
 	/// <param name="targetEmail">The target email for the alerts.</param>
-	public static async Task MonitorStockAsync(Stock stock, IEmailService emailService, string targetEmail){
+	public static async Task MonitorStockAsync(
+		Stock stock,
+		IStockGetService stockGetService,
+		IEmailService emailService,
+		string targetEmail
+	){
 		Console.WriteLine($"[Monitorando {stock.StockName}]");
 		Console.WriteLine($"Venda em: {stock.SellPrice}\nCompra em: {stock.BuyPrice}\n");
 		while (true){
 			try {
 				Console.WriteLine($"[{stock.StockName}] Verificando preço...");
-				StockAction action = await stock.GetStockActionAsync();
+				StockAction action = await stock.GetStockActionAsync(stockGetService);
 
 				if (action is Buy or Sell){
 					var (actionText, currPrice) = action switch {
@@ -63,10 +70,16 @@ public class StockQuoteAlert {
                     var config = provider.GetRequiredService<IOptions<Config>>().Value;
                     return new Email(config);
                 });
+				services.AddSingleton<IStockGetService, LeDevStockGetService>();
+				services.AddHttpClient<IStockGetService, LeDevStockGetService>(client=>{
+					client.BaseAddress = new Uri($"https://ledev.com.br/api/cotacoes/");	
+					client.Timeout = TimeSpan.FromSeconds(10);
+				});
 		}).Build();
 		try {
 	        var config = host.Services.GetRequiredService<IOptions<Config>>().Value;
 	        var emailService = host.Services.GetRequiredService<IEmailService>();
+			var stockGetService = host.Services.GetRequiredService<IStockGetService>();
 
             string targetEmail = config.TargetEmail;
 			Console.WriteLine($"Email de destino: {config.TargetEmail}\n");
@@ -77,7 +90,7 @@ public class StockQuoteAlert {
 				.Where(arg => !arg.StartsWith("--")) // ignore config args
 				.Chunk(3)
 				.Select(stockArgs => Stock.Parse(stockArgs))
-				.Select(stock => MonitorStockAsync(stock, emailService, config.TargetEmail))
+				.Select(stock => MonitorStockAsync(stock, stockGetService, emailService, config.TargetEmail))
 				.ToList();
 
 			// awaits the completion of all monitoring tasks
