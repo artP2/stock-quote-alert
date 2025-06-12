@@ -7,18 +7,9 @@ A .NET command-line application to monitor stock prices and send email alerts wh
 ## Setup
 
 1.  Clone the repository.
-2.  In the root directory, create a file named `config.json`.
-3.  Add your SMTP server details and the target email address to the file, following this structure:
+2.  In the root directory, modify the `appsettings.json` with your SMTP server datails.
 
-    ```json
-    {
-      "TargetEmail": "your-email@example.com",
-      "SmtpServer": "smtp.example.com",
-      "SmtpPort": 587,
-      "SmtpUser": "your-smtp-user@example.com",
-      "SmtpPassword": "your-smtp-password"
-    }
-    ```
+> **Note:** You can override this settings in the cli arguments.
 
 ## Usage
 
@@ -36,10 +27,15 @@ dotnet run PETR4 35.50 31.00
 dotnet run PETR4 35.50 31.00 MGLU3 2.50 1.80
 ```
 
+**Example (overriding configuration):**
+```bash
+dotnet run PETR4 35.50 31.00 --Config:SmtpPassword=batata123
+```
+
 To stop the application, press `Ctrl+C`.
 
 ## API Credits
 
 This project uses a public API provided by Ledev for stock price data.
 
-- **API Base URL**: `https://ledev.com.br/api/cotacoes/`
+- **API URL**: `https://ledev.com.br/api/cotacoes/`
