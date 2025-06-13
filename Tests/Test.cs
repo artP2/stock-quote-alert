@@ -86,4 +86,35 @@ public class StockQuoteAlertTests {
             Times.Once
         );
     }
+	
+    [Fact]
+    public async Task MonitorStockAsync_ShouldNotSendEmail_WhenActionIsDoNothing(){
+        var stock = new Stock("PETR4", SellPrice: 40, BuyPrice: 20);
+
+        _mockStockGetService
+            .Setup(s => s.GetPriceAsync("PETR4"))
+            .ReturnsAsync(30);
+
+		// cancel the loop
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(200);
+
+		try {
+	        await StockQuoteAlert.MonitorStockAsync(
+	            stock,
+	            _mockStockGetService.Object,
+	            _mockEmailService.Object,
+	            _config,
+	            cts.Token
+	        );
+		} catch (TaskCanceledException) {
+			// ignore task cancel
+		}
+
+        // assert
+		_mockEmailService.Verify(es =>
+            es.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never
+        );
+    }
 }
