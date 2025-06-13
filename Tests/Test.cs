@@ -1,23 +1,29 @@
 ﻿using Moq;
 
 public class StockQuoteAlertTests {
-    [Fact]
-    public async Task MonitorStockAsync_ShouldSendEmail_WhenActionIsSell(){
-        var stock = new Stock("PETR4", SellPrice: 40, BuyPrice: 20);
+	private readonly Mock<IStockGetService> _mockStockGetService;
+    private readonly Mock<IEmailService> _mockEmailService;
+    private readonly Config _config;
 
-        var mockStockGetService = new Mock<IStockGetService>();
-        mockStockGetService
-            .Setup(s => s.GetPriceAsync("PETR4"))
-            .ReturnsAsync(42);
-
-        var mockEmailService = new Mock<IEmailService>();
-        var config = new Config {
+    public StockQuoteAlertTests() {
+        _mockStockGetService = new Mock<IStockGetService>();
+        _mockEmailService = new Mock<IEmailService>();
+        _config = new Config {
             TargetEmail = "teste@email.com",
             SmtpServer = "smtp.example.com",
             SmtpPort = 587,
             SmtpUser = "user",
             SmtpPassword = "password"
         };
+    }
+	
+    [Fact]
+    public async Task MonitorStockAsync_ShouldSendEmail_WhenActionIsSell(){
+        var stock = new Stock("PETR4", SellPrice: 40, BuyPrice: 20);
+
+        _mockStockGetService
+            .Setup(s => s.GetPriceAsync("PETR4"))
+            .ReturnsAsync(42);
 
 		// cancel the loop
         var cts = new CancellationTokenSource();
@@ -26,9 +32,9 @@ public class StockQuoteAlertTests {
 		try {
 	        await StockQuoteAlert.MonitorStockAsync(
 	            stock,
-	            mockStockGetService.Object,
-	            mockEmailService.Object,
-	            config,
+	            _mockStockGetService.Object,
+	            _mockEmailService.Object,
+	            _config,
 	            cts.Token
 	        );
 		} catch (TaskCanceledException) {
@@ -36,7 +42,7 @@ public class StockQuoteAlertTests {
 		}
 
         // assert
-        mockEmailService.Verify(es =>
+        _mockEmailService.Verify(es =>
             es.SendAsync(
                 "teste@email.com",
                 It.Is<string>(s => s.Contains("vender")),
